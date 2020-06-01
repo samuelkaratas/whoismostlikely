@@ -6,9 +6,13 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
+    "create-react-class": "^15.6.3",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.1"
+    "react-scripts": "3.4.1",
+    "react-tappable": "^1.0.4",
+    "react-touch-events": "^2.1.0",
+    "tachyons": "^4.12.0"
   },
   "scripts": {
     "start": "react-scripts start",
