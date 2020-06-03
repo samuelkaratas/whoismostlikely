@@ -7,7 +7,7 @@ import Bottomnav from './components/Bottomnav/Bottomnav';
 import Signin from './components/Signin/Signin';
 
 const initialState = {
-  showOptions: true,
+  showOptions: false,
   questionNumber: 1,
   isSignedIn: false,
   route: "signin",
@@ -46,7 +46,7 @@ class App extends React.Component {
           method: 'get'
         }).then(response => response.json())
           .then(data => {
-            this.setState({ questionString: data.question })
+            this.setState({ questionString: data })
           }).catch(console.log)
   }
 
@@ -56,7 +56,8 @@ class App extends React.Component {
           method: 'get'
         }).then(response => response.json())
           .then(data => {
-            console.log(data)
+            console.log(data);
+            this.setState({ questionString: data })
           })
   }
 
@@ -67,7 +68,7 @@ class App extends React.Component {
         method: 'put',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-          isApproved: key
+          isapproved: key
         })
       }).then(response => response.json())
         .then(data => {
@@ -103,9 +104,10 @@ class App extends React.Component {
       if(this.state.isAdmin){
         await this.changeIsApproved(true);
         await this.getQuestionNumber();
+      }else{
+        await this.getQuestion();
       }
       await this.getUsers();
-      await this.getQuestion();
       let reverseShowOptions = !this.state.showOptions;
       let incrementedQuestionNumber = this.state.questionNumber + 1;
       this.setState({
@@ -151,10 +153,35 @@ class App extends React.Component {
   }
 
   onRouteChange = (route) => {
-    if(route === 'signout')
+    if(route === 'signout'){
+      if(this.state.isAdmin){
+        fetch('http://localhost:3000/deleteServer', {
+          method: 'post',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            sid: this.state.sid
+          })
+        }).then(response => response.json())
+          .then(data => {
+            console.log(data)
+          })
+        }else{
+          fetch('http://localhost:3000/signout', {
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              id: this.state.id
+            })
+          }).then(response => response.json())
+            .then(data => {
+              console.log(data)
+            })
+        }
       this.setState(initialState);
-    else if(route === 'home')
+    }
+    else if(route === 'home'){
       this.setState({isSignedIn: true});
+    }
 
     this.setState({ route: route });  
   }
@@ -175,11 +202,11 @@ class App extends React.Component {
       method: 'put',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        selectedName: key
+        selectedname: key
       })
     }).then(response => response.json())
       .then(data => {
-           console.log(data)
+          console.log(data)
       })
     console.log(key)
   }

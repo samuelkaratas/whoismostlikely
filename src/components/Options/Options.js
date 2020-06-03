@@ -4,8 +4,8 @@ const Options = ({ showOptions, leaderboard, users, onClickName }) => {
 	//I don't even know
 	let leaderboard2 = [];
 	for(let i = 0; i < leaderboard.length; i++){
-		leaderboard2.push(<div className="outline white w-25 pa3 ma3">
-		    {leaderboard[i]}
+		leaderboard2.push(<div key={leaderboard[i].selectedname} className="outline white w-80 pa3 ma3 center">
+		    {leaderboard[i].selectedname + ' --> ' + leaderboard[i].count}
 		</div>)
 	}
 	console.log('users', users)
@@ -31,7 +31,7 @@ const Options = ({ showOptions, leaderboard, users, onClickName }) => {
 		);
 	} else{
 		return(
-			<div className="flex flex-wrap justify-around">
+			<div className="flex flex-column">
 				{leaderboard2}
 			</div>
 		);

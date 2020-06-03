@@ -31,7 +31,7 @@ class Signin extends React.Component {
 	        .then(data => {
 	        	let found = false;
 				for(let i = 0; i < data.length; i++){
-				    if(data[i] === this.state.serverid){
+				    if(data[i].sid === this.state.serverid){
 				      found = true;
 				    }
 				}
@@ -42,12 +42,12 @@ class Signin extends React.Component {
 						headers: {'Content-Type': 'application/json'},
 						body: JSON.stringify({
 							sid: this.state.serverid,
-							name: this.state.name
+							name: this.state.name,
+							selectedname: ""
 						})
 					}).then(response => response.json())
 						.then(user => {
-							console.log('signin isApproved', user.isApproved)
-							this.props.onSidChange(user.sid, user.id, user.isApproved);
+							this.props.onSidChange(user.sid, user.id, user.isapproved);
 							this.props.getUsers();
 						})
 					} else {
