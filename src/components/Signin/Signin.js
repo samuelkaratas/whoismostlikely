@@ -25,7 +25,7 @@ class Signin extends React.Component {
 		//then it checks if the serverid that they put in is in the array 
 		//if it is call the signin func in server
 		//if it is not get out of here
-		fetch('http://localhost:3000/getParty/', {
+		fetch('http://192.168.0.15:3000/getParty/', {
 	        method: 'get'
 	      }).then(response => response.json())
 	        .then(data => {
@@ -37,7 +37,7 @@ class Signin extends React.Component {
 				}
 				if(found){
 					this.props.onRouteChange("home");
-					fetch('http://localhost:3000/signin', {
+					fetch('http://192.168.0.15:3000/signin', {
 						method: 'post',
 						headers: {'Content-Type': 'application/json'},
 						body: JSON.stringify({
@@ -48,6 +48,9 @@ class Signin extends React.Component {
 					}).then(response => response.json())
 						.then(user => {
 							this.props.onSidChange(user.sid, user.id, user.isapproved);
+							if(!this.props.isAdmin){
+								this.props.onUpdate();
+							}
 							this.props.getUsers();
 						})
 					} else {

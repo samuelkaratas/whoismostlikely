@@ -30,7 +30,7 @@ class App extends React.Component {
 
   getUsers = () => {
     //gets the users that are in that server
-    fetch('http://localhost:3000/profile/' + this.state.sid, {
+    fetch('http://192.168.0.15:3000/profile/' + this.state.sid, {
         method: 'get'
       }).then(response => response.json())
         .then(data => {
@@ -42,7 +42,7 @@ class App extends React.Component {
 
   getQuestion = () => {
     //gets the question with the random selected id 
-    fetch('http://localhost:3000/question/' + this.state.sid, {
+    fetch('http://192.168.0.15:3000/question/' + this.state.sid, {
           method: 'get'
         }).then(response => response.json())
           .then(data => {
@@ -52,7 +52,7 @@ class App extends React.Component {
 
   getQuestionNumber = () => {
     //picks a random question id in the server
-    fetch('http://localhost:3000/questionNumber/' + this.state.sid, {
+    fetch('http://192.168.0.15:3000/questionNumber/' + this.state.sid, {
           method: 'get'
         }).then(response => response.json())
           .then(data => {
@@ -64,7 +64,7 @@ class App extends React.Component {
   changeIsApproved = (key) => {
     //Only Admin can access this
     //Changes the is approved of everybody that is in the server
-    fetch('http://localhost:3000/update/' + this.state.sid, {
+    fetch('http://192.168.0.15:3000/update/' + this.state.sid, {
         method: 'put',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -79,7 +79,7 @@ class App extends React.Component {
   changeIsApprovedWithId = () => {
     //Everybody can access
     //Changes the is approved to false
-    fetch('http://localhost:3000/getupdate/' + this.state.sid + '/' + this.state.id, {
+    fetch('http://192.168.0.15:3000/getupdate/' + this.state.sid + '/' + this.state.id, {
         method: 'put'
       }).then(response => response.json())
         .then(data => {
@@ -89,7 +89,7 @@ class App extends React.Component {
 
   getLeaderboard = () => {
     //Gets the leaderboard
-    fetch('http://localhost:3000/leaderboard/' + this.state.sid, {
+    fetch('http://192.168.0.15:3000/leaderboard/' + this.state.sid, {
         method: 'get'
       }).then(response => response.json())
         .then(data => {
@@ -134,7 +134,7 @@ class App extends React.Component {
     //If it is true show leaderboard or next question 
     //If false don't do anything
     //NEEDS CHANGING
-    fetch('http://localhost:3000/getupdate/' + this.state.sid + '/' + this.state.id, {
+    fetch('http://192.168.0.15:3000/getupdate/' + this.state.sid + '/' + this.state.id, {
         method: 'get'
       }).then(response => response.json())
         .then(data => {
@@ -149,13 +149,16 @@ class App extends React.Component {
               this.onShowNextQuestion()
             }
           }
+          
         })
+        if(this.state.isSignedIn){
+          setTimeout(this.onUpdate, 1000);
+        }
   }
 
-  onRouteChange = (route) => {
-    if(route === 'signout'){
-      if(this.state.isAdmin){
-        fetch('http://localhost:3000/deleteServer', {
+  onSignout = () => {
+    if(this.state.isAdmin){
+        fetch('http://192.168.0.15:3000/deleteServer', {
           method: 'post',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
@@ -166,7 +169,7 @@ class App extends React.Component {
             console.log(data)
           })
         }else{
-          fetch('http://localhost:3000/signout', {
+          fetch('http://192.168.0.15:3000/signout', {
             method: 'post',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -178,6 +181,12 @@ class App extends React.Component {
             })
         }
       this.setState(initialState);
+  }
+
+  onRouteChange = (route) => {
+    if(route === 'signout'){
+      //Change signing out
+      this.onSignout();
     }
     else if(route === 'home'){
       this.setState({isSignedIn: true});
@@ -198,7 +207,7 @@ class App extends React.Component {
   onClickName = (key) => {
     //When name is selected send the key to server
     //Server increments the score of the selected Name
-    fetch('http://localhost:3000/profile/' + this.state.sid + '/' + this.state.id, {
+    fetch('http://192.168.0.15:3000/profile/' + this.state.sid + '/' + this.state.id, {
       method: 'put',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -216,7 +225,7 @@ class App extends React.Component {
     //Who ever pressed it is the admin (For testing)
     //Alert the user
     const a = Math.round(Math.random() * 100000);
-    fetch('http://localhost:3000/createParty', {
+    fetch('http://192.168.0.15:3000/createParty', {
       method: 'post',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -239,7 +248,7 @@ class App extends React.Component {
             <Questionbox questionNumber={this.state.questionNumber} questionString={this.state.questionString} className='center'/>
             <Options showOptions={this.state.showOptions} leaderboard={this.state.leaderboard} users={this.state.users} onClickName={this.onClickName} className='center'/>
             <Bottomnav showOptions={this.state.showOptions} onShowNextQuestion={this.onShowNextQuestion} onShowResults={this.onShowResults} isAdmin={this.state.isAdmin} onUpdate={this.onUpdate} />
-          </div> : <Signin onRouteChange={this.onRouteChange} onSidChange={this.onSidChange} getUsers={this.getUsers} onAdminChange={this.onAdminChange} />}
+          </div> : <Signin onRouteChange={this.onRouteChange} onSidChange={this.onSidChange} getUsers={this.getUsers} onAdminChange={this.onAdminChange} onUpdate={this.onUpdate} isAdmin={this.state.isAdmin} sid={this.state.sid} />}
         </div>
       </div>
     );

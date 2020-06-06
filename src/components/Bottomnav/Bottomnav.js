@@ -21,7 +21,7 @@ const Bottomnav = ({ showOptions, onShowNextQuestion, onShowResults, isAdmin, is
 	} else {
 		return(
 			<nav className='flex justify-end'>
-				<p onClick={onUpdate} className='f3 outline link dim white pa3 ma3 pointer'>Refresh</p>
+				
 			</nav>
 		);
 	}
