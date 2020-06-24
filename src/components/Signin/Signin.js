@@ -1,4 +1,5 @@
 import React from 'react';
+import socket from '../../utilities/socketConnection';
 
 class Signin extends React.Component {
 
@@ -25,6 +26,26 @@ class Signin extends React.Component {
 		//then it checks if the serverid that they put in is in the array 
 		//if it is call the signin func in server
 		//if it is not get out of here
+
+		socket.emit('signin', {
+			sid: this.state.serverid,
+			name: this.state.name
+		}, (data) => {
+			if(data){
+				console.log(data);
+				this.props.onRouteChange("home");
+				this.props.onSidChange(data.sid, data.id, data.isapproved);
+				//if(!this.props.isAdmin){
+				//	this.props.onUpdate();
+				//}
+				//this.props.getUsers();
+			}else{
+				alert('Get out of here!')
+			}
+			
+		})
+
+		/*
 		fetch('http://192.168.0.15:3000/getParty/', {
 	        method: 'get'
 	      }).then(response => response.json())
@@ -56,7 +77,7 @@ class Signin extends React.Component {
 					} else {
 						alert('Get out of here!')
 					}
-	        })
+	        })*/
 	        
 	}
 

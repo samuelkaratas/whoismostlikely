@@ -11,14 +11,14 @@ const Options = ({ showOptions, leaderboard, users, onClickName }) => {
 	console.log('users', users)
 	let users2 = [];
 	for(let i = 0; i < users.length; i++){
-		users2.push(users[i][1].name)
+		users2.push(users[i].name)
 	}
 	console.log('users2', users2)
 	//console.log('user0', users[0][1].id)
 	let users3 = [];
 	for(let i = 0; i < users.length; i++){
 		users3.push(
-		<div key={users[i][1].id} onClick={() => onClickName(users2[i])} className="outline shadow-5 white w-25 pa3 ma3 dim pointer">
+		<div key={users[i].id} onClick={() => onClickName(users2[i])} className="outline shadow-5 white w-25 pa3 ma3 dim pointer">
 		    {users2[i]}
 		</div>)
 	}

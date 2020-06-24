@@ -5,6 +5,8 @@ import Questionbox from './components/Questionbox/Questionbox';
 import Options from './components/Options/Options';
 import Bottomnav from './components/Bottomnav/Bottomnav';
 import Signin from './components/Signin/Signin';
+import socket from './utilities/socketConnection';
+
 
 const initialState = {
   showOptions: false,
@@ -18,7 +20,9 @@ const initialState = {
   selectedName: '',
   isAdmin: false,
   isApproved: false,
-  questionString: ''
+  questionString: '',
+  numOfSelected: 0,
+  gameMessage: ''
 };
 
 class App extends React.Component {
@@ -28,136 +32,79 @@ class App extends React.Component {
     this.state = initialState;
   }
 
-  getUsers = () => {
-    //gets the users that are in that server
-    fetch('http://192.168.0.15:3000/profile/' + this.state.sid, {
-        method: 'get'
-      }).then(response => response.json())
-        .then(data => {
-          const entries = Object.entries(data)
-          console.log('entries', entries)
-          this.setState({ users: entries})
-        })
-  }
+  componentDidMount = () => {
+    socket.on('question', (data) => {
+      console.log(data);
+      this.setState({ questionString: data.question, users: data.users });
+      let reverseShowOptions = !this.state.showOptions;
+      let incrementedQuestionNumber = this.state.questionNumber + 1;
+      this.setState({
+        showOptions: reverseShowOptions,
+        questionNumber: incrementedQuestionNumber,
+        numOfSelected: 0
+      })
+    })
 
-  getQuestion = () => {
-    //gets the question with the random selected id 
-    fetch('http://192.168.0.15:3000/question/' + this.state.sid, {
-          method: 'get'
-        }).then(response => response.json())
-          .then(data => {
-            this.setState({ questionString: data })
-          }).catch(console.log)
-  }
+    socket.on('leaderboard', (data) => {
+      console.log(data);
+      this.setState({ leaderboard: data})
+      let reverseShowOptions = !this.state.showOptions;
+      this.setState({
+        showOptions: reverseShowOptions,
+      })
+    })
 
-  getQuestionNumber = () => {
-    //picks a random question id in the server
-    fetch('http://192.168.0.15:3000/questionNumber/' + this.state.sid, {
-          method: 'get'
-        }).then(response => response.json())
-          .then(data => {
-            console.log(data);
-            this.setState({ questionString: data })
-          })
-  }
+    socket.on('score', (data) => {
+      let newNumber = this.state.numOfSelected + 1;
+      this.setState({ numOfSelected: newNumber });
+      if(this.state.numOfSelected === this.state.users.length){
+        this.onShowResults();
+      }
+    })
 
-  changeIsApproved = (key) => {
-    //Only Admin can access this
-    //Changes the is approved of everybody that is in the server
-    fetch('http://192.168.0.15:3000/update/' + this.state.sid, {
-        method: 'put',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          isapproved: key
-        })
-      }).then(response => response.json())
-        .then(data => {
-          console.log(this.state.isApproved)
-        })
-  }
+    socket.on('adminDisconnected', () => {
+      if(!this.state.isAdmin){
+        alert('Looks like admin signed out. Go to app store to download the app so that you can play with your friends anytime. See you there!!');
+        this.onSignout();
+      }
+      this.setState(initialState);
+    })
 
-  changeIsApprovedWithId = () => {
-    //Everybody can access
-    //Changes the is approved to false
-    fetch('http://192.168.0.15:3000/getupdate/' + this.state.sid + '/' + this.state.id, {
-        method: 'put'
-      }).then(response => response.json())
-        .then(data => {
-          this.setState({ isApproved: data })
-        })
-  }
-
-  getLeaderboard = () => {
-    //Gets the leaderboard
-    fetch('http://192.168.0.15:3000/leaderboard/' + this.state.sid, {
-        method: 'get'
-      }).then(response => response.json())
-        .then(data => {
-          this.setState({ leaderboard: data})
-        })
+    socket.on('somebodyDisconnected', (data) => {
+      let disUser;
+      for (var i = this.state.users.length - 1; i >= 0; i--) {
+        if(this.state.users[i].id === data){
+          disUser = this.state.users.splice(i, 1);
+        }
+      }
+      console.log(disUser[0].name + ' has left.');
+      let usersArr = this.state.users;
+      this.setState({ users: usersArr, gameMessage: disUser[0].name + ' has left.' });
+      setTimeout(() => {
+        this.setState({
+          gameMessage: ''
+        });
+      }, 2000);
+    })
   }
 
   onShowNextQuestion = async () => {
     //If admin presses it calls the changeIsApproved func which changes other players approved state
     //Then just the admin changes question number
     //Then get users and question according to the selected question number
-      if(this.state.isAdmin){
-        await this.changeIsApproved(true);
-        await this.getQuestionNumber();
-      }else{
-        await this.getQuestion();
-      }
-      await this.getUsers();
-      let reverseShowOptions = !this.state.showOptions;
-      let incrementedQuestionNumber = this.state.questionNumber + 1;
-      this.setState({
-        showOptions: reverseShowOptions,
-        questionNumber: incrementedQuestionNumber,
-      })
+    socket.emit('adminPressedShowNextQuestion', { sid: this.state.sid });
   }
 
   onShowResults = async () => {
     //If admin presses it calls the changeIsApproved func which changes other players approved state
     //Then gets the leaderboard
-      if(this.state.isAdmin){
-        await this.changeIsApproved(true);
-      }
-      await this.getLeaderboard();
-      let reverseShowOptions = !this.state.showOptions;
-      this.setState({
-        showOptions: reverseShowOptions,
-      })
-  }
-
-  onUpdate = () => {
-    //When pressed refresh get the isApproved state from server 
-    //If it is true show leaderboard or next question 
-    //If false don't do anything
-    //NEEDS CHANGING
-    fetch('http://192.168.0.15:3000/getupdate/' + this.state.sid + '/' + this.state.id, {
-        method: 'get'
-      }).then(response => response.json())
-        .then(data => {
-          this.setState({ isApproved: data});
-          if(this.state.isApproved){
-            this.changeIsApprovedWithId();
-            if(this.state.showOptions){
-              console.log('if statement in update')
-              this.onShowResults();
-            }else{
-              console.log('else statement in update')
-              this.onShowNextQuestion()
-            }
-          }
-          
-        })
-        if(this.state.isSignedIn){
-          setTimeout(this.onUpdate, 1000);
-        }
+    socket.emit('adminPressedShowLeaderboard', { sid: this.state.sid });
   }
 
   onSignout = () => {
     if(this.state.isAdmin){
+      socket.emit('deleteServer', { sid: this.state.sid });
+      /*
         fetch('http://192.168.0.15:3000/deleteServer', {
           method: 'post',
           headers: {'Content-Type': 'application/json'},
@@ -167,8 +114,11 @@ class App extends React.Component {
         }).then(response => response.json())
           .then(data => {
             console.log(data)
-          })
+          })*/
         }else{
+          socket.emit('signout', { id: this.state.id });
+          this.setState(initialState);
+          /*
           fetch('http://192.168.0.15:3000/signout', {
             method: 'post',
             headers: {'Content-Type': 'application/json'},
@@ -178,9 +128,9 @@ class App extends React.Component {
           }).then(response => response.json())
             .then(data => {
               console.log(data)
-            })
+            })*/
         }
-      this.setState(initialState);
+    window.location.reload(false);
   }
 
   onRouteChange = (route) => {
@@ -207,17 +157,10 @@ class App extends React.Component {
   onClickName = (key) => {
     //When name is selected send the key to server
     //Server increments the score of the selected Name
-    fetch('http://192.168.0.15:3000/profile/' + this.state.sid + '/' + this.state.id, {
-      method: 'put',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        selectedname: key
-      })
-    }).then(response => response.json())
-      .then(data => {
-          console.log(data)
-      })
-    console.log(key)
+    socket.emit('nameSelected', { id: this.state.id, key: key });
+    if(this.state.numOfSelected === this.state.users.length){
+      this.onShowResults();
+    }
   }
 
   onCreateParty = () => {
@@ -239,6 +182,16 @@ class App extends React.Component {
   }
 
   render() {
+    const mystyle = {
+      color: "white",
+      padding: "10px",
+      fontFamily: "Arial"
+    };
+    const messageStyle = {
+      color: "white",
+      backgroundColor: '#00e6e6',
+      opacity: '0.5'
+    }
     return (
       <div className="App">
         <div>
@@ -248,6 +201,8 @@ class App extends React.Component {
             <Questionbox questionNumber={this.state.questionNumber} questionString={this.state.questionString} className='center'/>
             <Options showOptions={this.state.showOptions} leaderboard={this.state.leaderboard} users={this.state.users} onClickName={this.onClickName} className='center'/>
             <Bottomnav showOptions={this.state.showOptions} onShowNextQuestion={this.onShowNextQuestion} onShowResults={this.onShowResults} isAdmin={this.state.isAdmin} onUpdate={this.onUpdate} />
+            {this.state.showOptions ? <p style={mystyle} >{this.state.numOfSelected}/{this.state.users.length} people answered!</p> : <p></p> }
+            <h2 style={messageStyle} >{this.state.gameMessage}</h2>
           </div> : <Signin onRouteChange={this.onRouteChange} onSidChange={this.onSidChange} getUsers={this.getUsers} onAdminChange={this.onAdminChange} onUpdate={this.onUpdate} isAdmin={this.state.isAdmin} sid={this.state.sid} />}
         </div>
       </div>
