@@ -26,59 +26,23 @@ class Signin extends React.Component {
 		//then it checks if the serverid that they put in is in the array 
 		//if it is call the signin func in server
 		//if it is not get out of here
-
-		socket.emit('signin', {
-			sid: this.state.serverid,
-			name: this.state.name
-		}, (data) => {
-			if(data){
-				console.log(data);
-				this.props.onRouteChange("home");
-				this.props.onSidChange(data.sid, data.id, data.isapproved);
-				//if(!this.props.isAdmin){
-				//	this.props.onUpdate();
-				//}
-				//this.props.getUsers();
-			}else{
-				alert('Get out of here!')
-			}
-			
-		})
-
-		/*
-		fetch('http://192.168.0.15:3000/getParty/', {
-	        method: 'get'
-	      }).then(response => response.json())
-	        .then(data => {
-	        	let found = false;
-				for(let i = 0; i < data.length; i++){
-				    if(data[i].sid === this.state.serverid){
-				      found = true;
-				    }
-				}
-				if(found){
+		if(this.props.isAdmin){
+			this.setState({serverid: this.props.sid});
+		}
+		setTimeout(() => {
+			socket.emit('signin', {
+				sid: this.state.serverid,
+				name: this.state.name
+			}, (data) => {
+				if(data){
+					//console.log(data);
 					this.props.onRouteChange("home");
-					fetch('http://192.168.0.15:3000/signin', {
-						method: 'post',
-						headers: {'Content-Type': 'application/json'},
-						body: JSON.stringify({
-							sid: this.state.serverid,
-							name: this.state.name,
-							selectedname: ""
-						})
-					}).then(response => response.json())
-						.then(user => {
-							this.props.onSidChange(user.sid, user.id, user.isapproved);
-							if(!this.props.isAdmin){
-								this.props.onUpdate();
-							}
-							this.props.getUsers();
-						})
-					} else {
-						alert('Get out of here!')
-					}
-	        })*/
-	        
+					this.props.onSidChange(data.sid, data.id, data.isapproved);
+				}else{
+					alert('Get out of here!')
+				}
+			}) 
+		},100); 
 	}
 
 	fileChangedHandler = event => {
@@ -110,7 +74,7 @@ class Signin extends React.Component {
 					<main className="pa4 black-80">
 					  <div className="measure">
 					    <fieldset id="sign_up" className="ba b--transparent ph0 mh0">
-					      <legend className="f1 fw6 ph0 mh0">Sign In</legend>
+					    {this.props.isAdmin ? <legend className="f1 fw6 ph0 mh0">Create Party</legend> : <legend className="f1 fw6 ph0 mh0">Sign In</legend>}
 					      <div className="mt3">
 					        <label className="db fw6 lh-copy f6" htmlFor="photo">Photo</label>
 					        <input 
@@ -136,15 +100,20 @@ class Signin extends React.Component {
 					        	name="name"  
 					        	id="name" />
 					      </div>
+					      {this.props.isAdmin ? 
 					      <div className="mv3">
-					        <label className="db fw6 lh-copy f6" htmlFor="serverid">Server ID</label>
+					        <label className="db fw6 lh-copy f4" htmlFor="serverid">Party Number: {this.props.sid}</label>
+					        <label className="db fw6 lh-copy f4" htmlFor="serverid">Share with your friends.</label>
+					      </div> : 
+					      <div className="mv3">
+					        <label className="db fw6 lh-copy f6" htmlFor="serverid">Party Number</label>
 					        <input 
 					        	onChange={this.onPasswordChange}
 					        	className="b pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100" 
 					        	type="text" 
 					        	name="serverid"  
 					        	id="serverid" />
-					      </div>
+					      </div>}
 					    </fieldset>
 					    <div className="">
 					      <input 

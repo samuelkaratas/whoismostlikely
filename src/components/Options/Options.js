@@ -5,15 +5,27 @@ const Options = ({ showOptions, leaderboard, users, onClickName }) => {
 	let leaderboard2 = [];
 	for(let i = 0; i < leaderboard.length; i++){
 		leaderboard2.push(<div key={leaderboard[i].selectedname} className="outline white w-80 pa3 ma3 center">
-		    {leaderboard[i].selectedname + ' --> ' + leaderboard[i].count}
+		    {leaderboard[i].selectedname.length ? leaderboard[i].selectedname + ' --> ' + leaderboard[i].count : 'Not answered --> ' + leaderboard[i].count}
 		</div>)
 	}
-	console.log('users', users)
+	let whoDrinks = [];
+	if(!showOptions){
+		for(let i = 0; i < leaderboard.length; i++){
+			whoDrinks.push(leaderboard[i].selectedname + ', ');
+			if(i === leaderboard.length-1){
+				break;
+			}
+			if(leaderboard[i].count !== leaderboard[i+1].count){
+				break;
+			}
+		}
+	}
+	//console.log('users', users)
 	let users2 = [];
 	for(let i = 0; i < users.length; i++){
 		users2.push(users[i].name)
 	}
-	console.log('users2', users2)
+	//console.log('users2', users2)
 	//console.log('user0', users[0][1].id)
 	let users3 = [];
 	for(let i = 0; i < users.length; i++){
@@ -32,6 +44,7 @@ const Options = ({ showOptions, leaderboard, users, onClickName }) => {
 	} else{
 		return(
 			<div className="flex flex-column">
+				<h3 className="white center" >{whoDrinks} Drink Up!!!</h3>
 				{leaderboard2}
 			</div>
 		);
@@ -39,3 +52,4 @@ const Options = ({ showOptions, leaderboard, users, onClickName }) => {
 }
 
 export default Options;
+

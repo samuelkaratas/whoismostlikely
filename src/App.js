@@ -7,7 +7,6 @@ import Bottomnav from './components/Bottomnav/Bottomnav';
 import Signin from './components/Signin/Signin';
 import socket from './utilities/socketConnection';
 
-
 const initialState = {
   showOptions: false,
   questionNumber: 1,
@@ -15,6 +14,7 @@ const initialState = {
   route: "signin",
   leaderboard: [],
   users: [],
+  joinedPeople: [],
   sid: 0,
   id: 0,
   selectedName: '',
@@ -33,8 +33,18 @@ class App extends React.Component {
   }
 
   componentDidMount = () => {
+
+    socket.on('somebodyJoined', (data) => {
+      this.setState({users: [], joinedPeople: []});
+      let users2 = [];
+      for(let i = 0; i < data.length; i++){
+        users2.push(data[i].name + ', ');
+      }
+      this.setState({users: data, joinedPeople: users2});
+    })
+
     socket.on('question', (data) => {
-      console.log(data);
+      //console.log(data);
       this.setState({ questionString: data.question, users: data.users });
       let reverseShowOptions = !this.state.showOptions;
       let incrementedQuestionNumber = this.state.questionNumber + 1;
@@ -46,7 +56,7 @@ class App extends React.Component {
     })
 
     socket.on('leaderboard', (data) => {
-      console.log(data);
+      //console.log(data);
       this.setState({ leaderboard: data})
       let reverseShowOptions = !this.state.showOptions;
       this.setState({
@@ -55,10 +65,15 @@ class App extends React.Component {
     })
 
     socket.on('score', (data) => {
-      let newNumber = this.state.numOfSelected + 1;
-      this.setState({ numOfSelected: newNumber });
-      if(this.state.numOfSelected === this.state.users.length){
-        this.onShowResults();
+      let a = this.state.users.length - data;
+      this.setState({numOfSelected: a});
+      //console.log(data)
+      data = Number(data);
+      if(this.state.isAdmin){
+        if(data === 0){
+          //console.log('fired');
+          this.onShowResults();
+        }
       }
     })
 
@@ -77,7 +92,7 @@ class App extends React.Component {
           disUser = this.state.users.splice(i, 1);
         }
       }
-      console.log(disUser[0].name + ' has left.');
+      //console.log(disUser[0].name + ' has left.');
       let usersArr = this.state.users;
       this.setState({ users: usersArr, gameMessage: disUser[0].name + ' has left.' });
       setTimeout(() => {
@@ -104,38 +119,15 @@ class App extends React.Component {
   onSignout = () => {
     if(this.state.isAdmin){
       socket.emit('deleteServer', { sid: this.state.sid });
-      /*
-        fetch('http://192.168.0.15:3000/deleteServer', {
-          method: 'post',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            sid: this.state.sid
-          })
-        }).then(response => response.json())
-          .then(data => {
-            console.log(data)
-          })*/
-        }else{
-          socket.emit('signout', { id: this.state.id });
-          this.setState(initialState);
-          /*
-          fetch('http://192.168.0.15:3000/signout', {
-            method: 'post',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-              id: this.state.id
-            })
-          }).then(response => response.json())
-            .then(data => {
-              console.log(data)
-            })*/
-        }
+    }else{
+      socket.emit('signout', { id: this.state.id });
+      this.setState(initialState);
+    }
     window.location.reload(false);
   }
 
   onRouteChange = (route) => {
     if(route === 'signout'){
-      //Change signing out
       this.onSignout();
     }
     else if(route === 'home'){
@@ -144,7 +136,6 @@ class App extends React.Component {
 
     this.setState({ route: route });  
   }
-
 
   onSidChange = (sid, id, isApproved) => {
     this.setState({ sid: sid, id: id, isApproved: isApproved });
@@ -157,10 +148,7 @@ class App extends React.Component {
   onClickName = (key) => {
     //When name is selected send the key to server
     //Server increments the score of the selected Name
-    socket.emit('nameSelected', { id: this.state.id, key: key });
-    if(this.state.numOfSelected === this.state.users.length){
-      this.onShowResults();
-    }
+    socket.emit('nameSelected', { id: this.state.id, key: key, sid: this.state.sid });
   }
 
   onCreateParty = () => {
@@ -177,7 +165,8 @@ class App extends React.Component {
     }).then(response => response.json())
       .then(arr => {
         this.onAdminChange();
-        alert('Room Number is ' + a + ' copy and text your friends!')
+        this.setState({ sid: a });
+        //alert('Room Number is ' + a + ' copy and text your friends!')
       })
   }
 
@@ -198,8 +187,9 @@ class App extends React.Component {
           <Navigation onRouteChange={this.onRouteChange} onCreateParty={this.onCreateParty} route={this.state.route} />
           {this.state.route === "home" ?
           <div>
-            <Questionbox questionNumber={this.state.questionNumber} questionString={this.state.questionString} className='center'/>
-            <Options showOptions={this.state.showOptions} leaderboard={this.state.leaderboard} users={this.state.users} onClickName={this.onClickName} className='center'/>
+            <Questionbox questionNumber={this.state.questionNumber} sid={this.state.sid} questionString={this.state.questionString} className='center'/>
+            {this.state.questionNumber === 1 ? <h3>{this.state.joinedPeople} joined the party!!</h3> : 
+            <Options showOptions={this.state.showOptions} leaderboard={this.state.leaderboard} users={this.state.users} onClickName={this.onClickName} className='center'/>}
             <Bottomnav showOptions={this.state.showOptions} onShowNextQuestion={this.onShowNextQuestion} onShowResults={this.onShowResults} isAdmin={this.state.isAdmin} onUpdate={this.onUpdate} />
             {this.state.showOptions ? <p style={mystyle} >{this.state.numOfSelected}/{this.state.users.length} people answered!</p> : <p></p> }
             <h2 style={messageStyle} >{this.state.gameMessage}</h2>
